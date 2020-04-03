@@ -36,7 +36,7 @@ Epoch	Accuracy
 18		0.9737704918032787
 19		0.9737704918032787
 20		0.9737704918032787
->>> labels1 = model1.predict(testing_samples)
+>>> labels1 = model1.classify(testing_samples)
 >>> acc = sum(testing_labels == labels1) / testing_labels.size
 >>> print(model1.w)
 [[ 2.62622022 -1.31718143 -1.30903878]  #random
@@ -45,7 +45,7 @@ Epoch	Accuracy
 0.9794871794871794  #random
 >>> model2 = LinearGenerativeModel()
 >>> model2.train(training_samples, training_labels)
->>> labels2 = model2.predict(testing_samples)
+>>> labels2 = model2.classify(testing_samples)
 >>> acc = sum(testing_labels == labels2) / testing_labels.size
 >>> print(model2.w)
 [[ 9.18231285 -0.0287646   0.49775292]  #random
@@ -231,13 +231,13 @@ class LinearDiscriminativeModel:
                     delta = delta + x[:, j].dot(y[j, :] - y1[j, :])
                 delta = delta / x.shape[1]
                 self.w = self.w + alpha * delta
-            labels1 = self.predict(samples)
+            labels1 = self.classify(samples)
             acc = sum(labels == labels1) / labels.size
             print('{epoch}\t\t{acc}'.format_map({"epoch": epoch + 1, "acc": acc[0, 0]}))
 
-    def predict(self, samples):
+    def classify(self, samples):
         """
-        Predict the labels of input samples
+        classify input samples
 
         Parameters
         ----------
@@ -253,7 +253,7 @@ class LinearDiscriminativeModel:
         --------
         >>> model = LinearDiscriminativeModel()
         >>> model.train(training_samples, training_labels)
-        >>> pred = model.predict(testing_samples)
+        >>> pred = model.classify(testing_samples)
         >>> acc = sum(pred == testing_labels) / testing_labels.size
 
         """
@@ -307,9 +307,9 @@ class LinearGenerativeModel:
             self.w[:, i] = sigma_inv.dot(mus[:, i])
             self.b[i, 0] = -1 / 2 * mus[:, i].T.dot(self.w[:, i]) + np.log(ps[i, 0])
 
-    def predict(self, samples):
+    def classify(self, samples):
         """
-        Predict the labels of input samples
+        classify input samples
 
         Parameters
         ----------
@@ -325,7 +325,7 @@ class LinearGenerativeModel:
         ----------
         >>> model = LinearGenerativeModel()
         >>> model.train(training_samples, training_labels)
-        >>> pred = model.predict(testing_samples)
+        >>> pred = model.classify(testing_samples)
         >>> acc = sum(pred == testing_labels) / testing_labels.size
 
         """
