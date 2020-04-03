@@ -7,7 +7,7 @@ Provides
     2. Functions used for create, load and split dataset.
 
 Examples
-========
+--------
 >>> create_dataset()
 >>> samples, labels = load_dataset()
 >>> set_of_samples, set_of_labels = split_dataset(samples, labels, [0.8])
