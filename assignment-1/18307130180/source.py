@@ -1,3 +1,59 @@
+"""
+Source
+======
+
+Provides
+    1. Linear discriminative and generative model for classification.
+    2. Functions used for create, load and split dataset.
+
+Examples
+========
+>>> create_dataset()
+>>> samples, labels = load_dataset()
+>>> set_of_samples, set_of_labels = split_dataset(samples, labels, [0.8])
+>>> training_samples, testing_samples = set_of_samples
+>>> training_labels, testing_labels = set_of_labels
+>>> model1 = LinearDiscriminativeModel()
+>>> model1.train(training_samples, training_labels, max_epochs=20)
+Epoch	Accuracy
+1		0.9590163934426229 #random
+2		0.9639344262295082
+3		0.9655737704918033
+4		0.9672131147540983
+5		0.9688524590163935
+6		0.9688524590163935
+7		0.9672131147540983
+8		0.9704918032786886
+9		0.9721311475409836
+10		0.9721311475409836
+11		0.9721311475409836
+12		0.9737704918032787
+13		0.9737704918032787
+14		0.9737704918032787
+15		0.9737704918032787
+16		0.9737704918032787
+17		0.9737704918032787
+18		0.9737704918032787
+19		0.9737704918032787
+20		0.9737704918032787
+>>> labels1 = model1.predict(testing_samples)
+>>> acc = sum(testing_labels == labels1) / testing_labels.size
+>>> print(model1.w)
+[[ 2.62622022 -1.31718143 -1.30903878]  #random
+ [ 0.72619941 -3.81306407  3.08686466]]
+>>> print(acc[0, 0])
+0.9794871794871794  #random
+>>> model2 = LinearGenerativeModel()
+>>> model2.train(training_samples, training_labels)
+>>> labels2 = model2.predict(testing_samples)
+>>> acc = sum(testing_labels == labels2) / testing_labels.size
+>>> print(model2.w)
+[[ 9.18231285 -0.0287646   0.49775292]  #random
+ [ 0.27302244 -9.82742259  9.82056657]]
+>>> print(acc[0, 0])
+0.9794871794871794 #random
+
+"""
 import numpy as np
 
 
@@ -37,10 +93,10 @@ def generate_gaussian_distributed_samples(mus, sigma, ps, n):
     np.random.shuffle(index)
     samples, labels = samples[index, :], labels[index]
     labels.shape = (n, 1)
-    return np.hstack((samples, labels))
+    return samples, labels
 
 
-def create_data_set(mus=None, ps=None, sigma=None, n=800):
+def create_dataset(mus=None, ps=None, sigma=None, n=1000):
     """
     Create data set for classification and output to txt file
     """
@@ -51,11 +107,18 @@ def create_data_set(mus=None, ps=None, sigma=None, n=800):
     if sigma is None:
         sigma = [[.1, 0], [0, .1]]
 
-    samples = generate_gaussian_distributed_samples(mus, sigma, ps, n)
-    np.savetxt('*.data', samples, fmt='%.4f')
+    samples, labels = generate_gaussian_distributed_samples(mus, sigma, ps, n)
+    dataset = ''
+    for i in range(samples.shape[0]):
+        for j in range(samples.shape[1]):
+            dataset = dataset + '{:.4f} '.format(samples[i, j])
+        dataset = dataset + str(int(labels[i, 0])) + '\n'
+    f = open('*.data', 'w')
+    f.write(dataset)
+    f.close()
 
 
-def load_samples(filename=None):
+def load_dataset(filename=None):
     """
     load samples and labels from txt file
     """
@@ -65,6 +128,49 @@ def load_samples(filename=None):
     n = samples.shape[0]
     samples, labels = samples[:, 0:-1], samples[:, -1].astype(int).reshape((n, 1))
     return samples, labels
+
+
+def split_dataset(samples, labels, proportions):
+    """
+    Split dataset in proportion.
+
+    Parameters
+    ----------
+    samples : array_like
+        Samples in rows.
+    labels : array_like
+        Sample labels from 0 to n-1.
+    proportions : list of float
+        Proportions of each part of dataset from 0 ot 1.
+        If the sum of proportions is no 1, a new part will be added.
+
+    Return
+    ------
+    xs : list of samples
+    ys : list of labels
+
+    Example
+    -------
+    >>> samples, labels = split_dataset(samples, labels, [0.8])
+
+    """
+    xs, ys = [], []
+    n = samples.shape[0]
+    idx = np.arange(n).astype(int)
+    np.random.shuffle(idx)
+    if not np.sum(proportions) == 1:
+        proportions.extend([1 - np.sum(proportions)])
+    nums = np.round(n * np.asarray(proportions)).astype(int)
+    beg, end = 0, 0
+    for i in range(nums.size):
+        if i == nums.size - 1:
+            end = n
+        else:
+            end = beg + nums[i]
+        xs.extend([samples[idx[beg: end], :]])
+        ys.extend([labels[idx[beg: end], :]])
+        beg = end
+    return xs, ys
 
 
 class LinearDiscriminativeModel:
@@ -236,20 +342,7 @@ def softmax(x):
 
 
 def main():
-    create_data_set()
-    samples, labels = load_samples('*.data')
-    model1 = LinearDiscriminativeModel()
-    model1.train(samples, labels, max_epochs=50)
-    labels1 = model1.predict(samples)
-    acc = sum(labels == labels1) / labels.size
-    print(model1.w)
-    print(acc)
-    model2 = LinearGenerativeModel()
-    model2.train(samples, labels)
-    labels2 = model2.predict(samples)
-    acc = sum(labels == labels2) / labels.size
-    print(model2.w)
-    print(acc)
+    pass
 
 
 if __name__ == '__main__':
