@@ -7,53 +7,86 @@ Provides
     2. Functions used for create, load and split dataset.
 
 Examples
---------
+========
+>>>
+>>> from source import *
 >>> create_dataset()
 >>> samples, labels = load_dataset()
 >>> set_of_samples, set_of_labels = split_dataset(samples, labels, [0.8])
 >>> training_samples, testing_samples = set_of_samples
 >>> training_labels, testing_labels = set_of_labels
 >>> model1 = LinearDiscriminativeModel()
->>> model1.train(training_samples, training_labels, max_epochs=20)
+>>> model1.train(training_samples, training_labels, learning_rate=.9, max_epochs=50, plot_training_process=False)
 Epoch	Accuracy
-1		0.9590163934426229 #random
-2		0.9639344262295082
-3		0.9655737704918033
-4		0.9672131147540983
-5		0.9688524590163935
-6		0.9688524590163935
-7		0.9672131147540983
-8		0.9704918032786886
-9		0.9721311475409836
-10		0.9721311475409836
-11		0.9721311475409836
-12		0.9737704918032787
-13		0.9737704918032787
-14		0.9737704918032787
-15		0.9737704918032787
-16		0.9737704918032787
-17		0.9737704918032787
-18		0.9737704918032787
-19		0.9737704918032787
-20		0.9737704918032787
->>> labels1 = model1.classify(testing_samples)
+1		0.97125
+2		0.9725
+3		0.9775
+4		0.98125
+5		0.9825
+6		0.9825
+7		0.98125
+8		0.9825
+9		0.985
+10		0.985
+11		0.9875
+12		0.9875
+13		0.98875
+14		0.98875
+15		0.98875
+16		0.9875
+17		0.9875
+18		0.98875
+19		0.98875
+20		0.98875
+21		0.98875
+22		0.98875
+23		0.98875
+24		0.98875
+25		0.98875
+26		0.98875
+27		0.98875
+28		0.98875
+29		0.99
+30		0.99
+31		0.99
+32		0.99
+33		0.99
+34		0.99
+35		0.99
+36		0.99
+37		0.99
+38		0.99
+39		0.99
+40		0.99
+41		0.99
+42		0.99
+43		0.99
+44		0.99
+45		0.99
+46		0.99
+47		0.99
+48		0.99
+49		0.99
+50		0.99
+>>> labels1 = model1.classify(testing_samples, plot_classification_result=False)
 >>> acc = sum(testing_labels == labels1) / testing_labels.size
 >>> print(model1.w)
-[[ 2.62622022 -1.31718143 -1.30903878]  #random
- [ 0.72619941 -3.81306407  3.08686466]]
+[[ 3.80438433 -2.04399475 -1.76038958]
+ [ 0.92932523 -5.47955759  4.55023236]]
 >>> print(acc[0, 0])
-0.9794871794871794  #random
+0.975
 >>> model2 = LinearGenerativeModel()
 >>> model2.train(training_samples, training_labels)
->>> labels2 = model2.classify(testing_samples)
+>>> labels2 = model2.classify(testing_samples, plot_classification_result=False)
 >>> acc = sum(testing_labels == labels2) / testing_labels.size
 >>> print(model2.w)
-[[ 9.18231285 -0.0287646   0.49775292]  #random
- [ 0.27302244 -9.82742259  9.82056657]]
+[[  9.36970937  -0.43319556  -0.04108211]
+ [  0.08862703 -10.40075944  10.15249546]]
 >>> print(acc[0, 0])
-0.9794871794871794 #random
+0.975
 
 """
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -64,18 +97,18 @@ def generate_gaussian_distributed_samples(mus, sigma, ps, n):
     Parameters
     ----------
     mus : array_like
-        Expectations of gaussian distributions.
+        Mathematic expectations of gaussian distributions.
     sigma : array_like
        Covariance matrix of gaussian distributions.
     ps:
         Sampling probability of each class.
     n : int
-        number of samples
+        Number of samples
 
     Returns
     -------
     samples :
-        samples compiled to gaussian distribution
+        Samples compiled to Gaussian distribution.
     labels :
         Sample labels.
 
@@ -120,7 +153,7 @@ def create_dataset(mus=None, ps=None, sigma=None, n=1000):
 
 def load_dataset(filename=None):
     """
-    load samples and labels from txt file
+    Load samples and labels from file
     """
     if filename is None:
         filename = '*.data'
@@ -144,10 +177,12 @@ def split_dataset(samples, labels, proportions):
         Proportions of each part of dataset from 0 ot 1.
         If the sum of proportions is no 1, a new part will be added.
 
-    Return
-    ------
-    xs : list of samples
-    ys : list of labels
+    Returns
+    -------
+    xs :
+        List of samples.
+    ys :
+        List of labels.
 
     Example
     -------
@@ -173,16 +208,56 @@ def split_dataset(samples, labels, proportions):
     return xs, ys
 
 
-class LinearDiscriminativeModel:
+def softmax(x):
+    x = np.asmatrix(x)
+    x = x - np.max(x, axis=1)
+    return np.exp(x) / np.sum(np.exp(x), axis=1)
+
+
+class LinearModel:
+    def __init__(self):
+        self.colors = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [0, 1, 1]])
+        self.axes_size = np.array([[0.1, 0.4, 0.8, 0.5], [0.1, 0.1, 0.8, 0.25], [0.1, 0.1, 0.8, 0.8]])
+
+    def plot_classification_result(self, axes, samples, labels, preds):
+        """
+        PLot the classification result
+
+        If the sample has more than two dimensions, this method will only plot the first two dimensions of sample. If
+        the sample has only one dimension, this method will plot samples on the X axis of the plane. The
+        misclassified samples are shown in black while others are shown in other colors. If samples are classified
+        into more than 6 classes, some classes will be shown in the same cyan color.
+
+        """
+        labels, preds = np.asarray(labels), np.asarray(preds)
+        plt.cla()
+
+        if samples.ndim == 1:
+            xs = np.hstack(samples, np.zeros(samples.shape))
+        else:
+            xs = samples
+        idx = (labels != preds).reshape((labels.size,))
+        axes.scatter(xs[idx, 0], xs[idx, 1], s=10, c='k')
+        for i in range(labels.max() + 1):
+            if i < self.colors.shape[0]:
+                color = [self.colors[i, :]]
+            else:
+                color = [self.colors[-1, :]]
+            idx = ((labels == preds) & (labels == i)).reshape((labels.size,))
+            axes.scatter(xs[idx, 0], xs[idx, 1], s=10, c=color)
+
+
+class LinearDiscriminativeModel(LinearModel):
     """
     Linear discriminative model for classification with softmax regression and argmax classification strategy
     """
 
     def __init__(self):
+        super().__init__()
         self.n_classes = 0
         self.w = np.zeros((0,))
 
-    def train(self, samples, labels, learning_rate=0.9, max_epochs=50, mini_batch_size=128):
+    def train(self, samples, labels, learning_rate=0.9, max_epochs=50, mini_batch_size=128, plot_training_process=True):
         """
         Train the model using samples and labels
 
@@ -198,7 +273,8 @@ class LinearDiscriminativeModel:
             Max number of training epochs.
         mini_batch_size: int, optional
             Mini batch size of training.
-
+        plot_training_process: bool, optional
+            Plot the training process of not.
         Examples
         --------
         >>> model = LinearDiscriminativeModel()
@@ -214,6 +290,14 @@ class LinearDiscriminativeModel:
             idx = (labels == i).reshape((labels.size,))
             ys[i, idx] = 1
         self.w = np.asmatrix(np.zeros((xs.shape[1], self.n_classes)))
+        if plot_training_process:
+            epochs, accuracies = [], []
+            fig = plt.figure()
+            plt.clf()
+            plt.ion()
+            axes1 = plt.axes(self.axes_size[0, :])
+            axes2 = plt.axes(self.axes_size[1, :])
+            axes1.set_title('Classification result and accuracy')
 
         print('Epoch\tAccuracy')
         for epoch in range(max_epochs):
@@ -233,16 +317,25 @@ class LinearDiscriminativeModel:
                 self.w = self.w + alpha * delta
             labels1 = self.classify(samples)
             acc = sum(labels == labels1) / labels.size
+            if plot_training_process:
+                epochs.extend([epoch + 1])
+                accuracies.extend([acc[0, 0]])
+                self.__plot_training_process(axes1, axes2, epochs, accuracies, samples, labels, labels1)
             print('{epoch}\t\t{acc}'.format_map({"epoch": epoch + 1, "acc": acc[0, 0]}))
+        if plot_training_process:
+            plt.ioff()
+            plt.show()
 
-    def classify(self, samples):
+    def classify(self, samples, plot_classification_result=False):
         """
-        classify input samples
+        Classify input samples
 
         Parameters
         ----------
         samples : array_like
             Samples in rows.
+        plot_classification_result : bool, optional
+            Plot hte classification result or not.
 
         Returns
         -------
@@ -261,14 +354,40 @@ class LinearDiscriminativeModel:
         wx = self.w.T.dot(xs.T).T
         ys = softmax(wx)
         labels = np.argmax(ys, axis=1)
+        if plot_classification_result:
+            plt.figure()
+            axes = plt.axes(self.axes_size[2, :])
+            self.__plot_classification_result(axes, samples, labels, labels)
+            axes.set_title('Classification result of linear discriminative model')
+            plt.show()
         return labels
 
+    def __plot_training_process(self, axes1, axes2, epochs, accuracies, samples, labels, preds):
+        """
+        Plot the training precess.
 
-class LinearGenerativeModel:
+        The figure is divided into two parts, the upper and the lower. The upper part contains the classification
+        results of samples. The lower part contains the classification accuracy and training epochs.
+
+        """
+        self.__plot_classification_result(axes1, samples, labels, preds)
+        axes2.plot(epochs, accuracies)
+        plt.pause(0.01)
+
+    def __plot_classification_result(self, axes, samples, labels, preds):
+        """
+        Plot the classification result
+        """
+        super().plot_classification_result(axes, samples, labels, preds)
+
+
+class LinearGenerativeModel(LinearModel):
     """
     Linear generative model for classification using gaussian distributions
     """
+
     def __init__(self):
+        super().__init__()
         self.n_classes = 2
         self.w = np.zeros((0,))
         self.b = np.zeros((0,))
@@ -307,7 +426,7 @@ class LinearGenerativeModel:
             self.w[:, i] = sigma_inv.dot(mus[:, i])
             self.b[i, 0] = -1 / 2 * mus[:, i].T.dot(self.w[:, i]) + np.log(ps[i, 0])
 
-    def classify(self, samples):
+    def classify(self, samples, plot_classification_result=False):
         """
         classify input samples
 
@@ -315,6 +434,8 @@ class LinearGenerativeModel:
         ----------
         samples : array_like
             Samples in rows.
+        plot_classification_result : bool, optional
+            Plot the classification result or not.
 
         Returns
         ----------
@@ -332,13 +453,19 @@ class LinearGenerativeModel:
         a = (self.w.T.dot(samples.T) + self.b).T
         ys = softmax(a)
         labels = np.argmax(ys, axis=1)
+        if plot_classification_result:
+            plt.figure()
+            axes = plt.axes(self.axes_size[2, :])
+            self.__plot_classification_result(axes, samples, labels, labels)
+            axes.set_title('Classification result of linear generative model')
+            plt.show()
         return labels
 
-
-def softmax(x):
-    x = np.asmatrix(x)
-    x = x - np.max(x, axis=1)
-    return np.exp(x) / np.sum(np.exp(x), axis=1)
+    def __plot_classification_result(self, axes, samples, labels, preds):
+        """
+        PLot the classification result
+        """
+        super().plot_classification_result(axes, samples, labels, preds)
 
 
 def main():
