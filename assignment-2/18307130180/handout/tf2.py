@@ -13,7 +13,7 @@ class myTFRNNModel(keras.Model):
         super().__init__()
         self.embed_layer = layers.Embedding(10, 64, input_length=max_length)
         self.rnn_layer = layers.RNN(layers.SimpleRNNCell(64), return_sequences=True)
-        self.dense = layers.Dense(max_length, activation=tf.nn.softmax)
+        self.dense = layers.Dense(10, activation=tf.nn.softmax)
 
     @tf.function
     def call(self, num1, num2):
@@ -29,7 +29,7 @@ class myAdvTFRNNModel(keras.Model):
         super().__init__()
         self.embed_layer = layers.Embedding(10, 128, input_length=max_length)
         self.lstm_layer = layers.LSTM(64, return_sequences=True)
-        self.dense = layers.Dense(max_length, activation=tf.nn.softmax)
+        self.dense = layers.Dense(10, activation=tf.nn.softmax)
 
     @tf.function
     def call(self, num1, num2):
@@ -42,7 +42,7 @@ class myAdvTFRNNModel(keras.Model):
 
 @tf.function
 def compute_loss(logits, labels):
-    y_true = tf.one_hot(labels, depth=labels.shape[-1])
+    y_true = tf.one_hot(labels, depth=10)
     losses = tf.keras.losses.categorical_crossentropy(y_true=y_true, y_pred=logits, from_logits=True)
     return tf.reduce_mean(losses)
 

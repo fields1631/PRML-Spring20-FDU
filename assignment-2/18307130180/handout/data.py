@@ -2,7 +2,7 @@
 import tensorflow as tf
 import numpy as np
 
-def generate_batch(batch_size, max_len):
+def generate_batch(batch_size, max_len, return_carry=False):
     """
     Generate a batch of data.
 
@@ -26,14 +26,27 @@ def generate_batch(batch_size, max_len):
     nums2 = np.random.randint(0, 10, size=(batch_size, max_len))
     results = np.zeros(shape=(batch_size, max_len))
 
-    for i in range(batch_size):
-        carry = 0
-        for j in range(max_len):
-            num1, num2 = nums1[i, j], nums2[i, j]
-            results[i, j] = (carry + num1 + num2) % 10
-            carry = (carry + num1 + num2) // 10
+    if return_carry:
+        carrys_in = np.zeros((batch_size, max_len))
+        carrys_out = np.zeros((batch_size, 1))
+        for i in range(batch_size):
+            carry = np.random.randint(0, 2)
+            carrys_in[i, 0] = carry
+            for j in range(max_len):
+                num1, num2 = nums1[i, j], nums2[i, j]
+                results[i, j] = (carry + num1 + num2) % 10
+                carry = (carry + num1 + num2) // 10
+            carrys_out[i] = carry
+        return carrys_in, nums1, nums2, results, carrys_out
+    else:
+        for i in range(batch_size):
+            carry = 0
+            for j in range(max_len):
+                num1, num2 = nums1[i, j], nums2[i, j]
+                results[i, j] = (carry + num1 + num2) % 10
+                carry = (carry + num1 + num2) // 10
+        return nums1, nums2, results
 
-    return nums1, nums2, results
 
 def row_to_string(row):
     """

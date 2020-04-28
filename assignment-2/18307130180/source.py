@@ -9,14 +9,15 @@ import time
 from handout import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', choices=['normal', 'advanced'], default='normal')
+parser.add_argument('--model', choices=['normal', 'advanced', 'cascade'], default='cascade')
 parser.add_argument('--optimizer', choices=['Adam', 'SGD', 'RMSprop'], default='Adam')
-parser.add_argument('--max_length', type=int, default=10)
+parser.add_argument('--max_length', type=int, default=20)
 parser.add_argument('--steps', type=int, default=3000)
 parser.add_argument('--learning_rate', type=float, default=0.01)
 parser.add_argument('--batch_size', type=int, default=32)
-parser.add_argument('--evaluate_batch_size', type=int, default=2001)
-parser.add_argument('--plot', type=bool, default=True)
+parser.add_argument('--evaluate_batch_size', type=int, default=101)
+parser.add_argument('--plot', type=bool, default=False)
+parser.add_argument('--unit_max_length', type=int, default=5)
 parser = parser.parse_args()
 
 logger = logging.getLogger(__name__)
@@ -44,5 +45,7 @@ if __name__ == '__main__':
         tf_main(parser)
     elif parser.model == 'advanced':
         tf_adv_main(parser)
+    elif parser.model == 'cascade':
+        tf_cascade_main(parser)
     else:
         raise RuntimeError
