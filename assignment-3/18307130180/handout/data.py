@@ -11,30 +11,29 @@ def createDataset(parser):
     counts = counts.astype(int)
     counts[0] = counts[0] + (n - np.sum(counts))
     dataset = np.zeros([parser.numOfSamples, parser.dimOfDistributions])
+    labels = np.zeros(parser.numOfSamples)
 
     beg, end = 0, 0
     for i in range(parser.numOfDistributions):
         mean, cov = means[i], covs[i]
         beg, end = end, end + counts[i]
         dataset[beg:end] = multivariate_normal(mean, cov, counts[i])
+        labels[beg:end] = i
 
     indices = np.arange(n)
     shuffle(indices)
     dataset = dataset[indices]
+    labels = labels[indices]
     pickle.dump(dataset, open(parser.datasetPath, 'wb'))
     if parser.saveLabels:
-        labels = {'means': means, 'covs': covs, 'labels': indices}
         pickle.dump(labels, open(parser.labelsPath, 'wb'))
 
     return dataset
 
 
 def initializeGaussianDistributions(parser):
-    def isPositiveDefinite(x):
-        return np.all(np.linalg.eigvals(x) > 0)
-
     num, dim = parser.numOfDistributions, parser.dimOfDistributions
-    means = random([num, dim]) * parser.separateDegree
+    means = random([num, dim]) * parser.separationDegree
     covs = np.zeros([num, dim, dim])
     i = 0
     while i < parser.numOfDistributions:
@@ -46,3 +45,6 @@ def initializeGaussianDistributions(parser):
 
     coeffs = softmax(random(num))
     return means, covs, coeffs
+
+def isPositiveDefinite(x):
+    return np.all(np.linalg.eigvals(x) > 0) 
