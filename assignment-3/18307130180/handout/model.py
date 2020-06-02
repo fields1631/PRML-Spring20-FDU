@@ -300,7 +300,7 @@ def trainModel(parser):
     return model
 
 
-def evaluate(parser):
+def evaluateModel(parser):
     dataset = pickle.load(open(parser.datasetPath, 'rb'))
     labels = pickle.load(open(parser.labelsPath, 'rb'))
 

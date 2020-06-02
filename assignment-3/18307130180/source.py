@@ -8,7 +8,7 @@ from handout import *
 parser = argparse.ArgumentParser()
 
 dataGroup = parser.add_argument_group('data')
-dataGroup.add_argument('--createDataset', type=bool, default=False)
+dataGroup.add_argument('--createDataset', type=bool, default=True)
 dataGroup.add_argument('--datasetPath', type=str, default='handout/samples.data')
 dataGroup.add_argument('--numOfSamples', type=int, default=1000)
 dataGroup.add_argument('--numOfDistributions', type=int, default=3)
@@ -42,4 +42,4 @@ if __name__ == '__main__':
     if parser.train:
         trainModel(parser)
     if parser.evaluate:
-        evaluate(parser)
+        evaluateModel(parser)
